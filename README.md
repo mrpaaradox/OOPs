@@ -1,6 +1,6 @@
 # Java OOP — Complete Study Guide
 
-A topic-by-topic guide to the **Object Oriented Programming in Java** playlist. Every major concept has a short explanation and a focused code example.
+A topic-by-topic guide to the **Object Oriented Programming in Java** playlist. Every major concept has a short explanation, a focused code example, and the output that code produces.
 
 The complete runnable programs are in `OOPs/OOP1.java` through `OOPs/OOP7.java`.
 
@@ -125,6 +125,14 @@ public class Main {
 }
 ```
 
+Output:
+
+```text
+Unknown
+Kunal
+Kunal
+```
+
 This shows four ideas:
 
 - **Default constructor:** `Student()`
@@ -166,6 +174,13 @@ public class Main {
 }
 ```
 
+Output:
+
+```text
+Rahul
+Arpit Kumar
+```
+
 `final` on a primitive makes it a constant. `final` on a reference prevents reassignment, but the object's fields can still change:
 
 ```java
@@ -196,6 +211,15 @@ public class Main {
 }
 ```
 
+Output:
+
+```text
+10
+10
+42
+2147483647
+```
+
 Common wrapper classes include `Integer`, `Double`, `Character`, `Boolean`, and `Long`.
 
 ---
@@ -221,6 +245,8 @@ public class Main {
     }
 }
 ```
+
+Output on JDK 25: nothing at all. The finalizer thread may not keep up before the JVM exits, and `finalize()` is never guaranteed to run.
 
 Key points:
 
@@ -258,6 +284,12 @@ public class Main {
         message();
     }
 }
+```
+
+Output:
+
+```text
+Hello from util
 ```
 
 - `package` declares where the class belongs.
@@ -370,6 +402,13 @@ public class Main {
 }
 ```
 
+Output:
+
+```text
+10
+Nested
+```
+
 Only nested classes can be `static`. A top-level class cannot be static.
 
 ---
@@ -452,6 +491,13 @@ public class Main {
 }
 ```
 
+Output:
+
+```text
+2.0 3.0 4.0
+8.0
+```
+
 `super(...)` calls the parent constructor and must be the first statement in the child constructor. Java supports single inheritance for classes.
 
 ---
@@ -490,6 +536,13 @@ public class Main {
         s2.area();
     }
 }
+```
+
+Output:
+
+```text
+Area is pi * r * r
+Area is side * side
 ```
 
 Method **overloading** is compile-time polymorphism:
@@ -542,6 +595,12 @@ public class Main {
 }
 ```
 
+Output:
+
+```text
+300.0
+```
+
 The field `balance` cannot be changed directly from outside the class. All changes go through methods that can validate the input.
 
 ---
@@ -573,6 +632,13 @@ public class Main {
         v.stop();
     }
 }
+```
+
+Output:
+
+```text
+Car starts with a key
+Vehicle stopped
 ```
 
 `Vehicle` cannot be instantiated directly. The subclass must provide the missing behavior.
@@ -646,6 +712,13 @@ public class Main {
         System.out.println(LocalDate.now());
     }
 }
+```
+
+Output:
+
+```text
+[1, 2, 3]
+2026-11-06
 ```
 
 `java.lang` is imported automatically. Other packages must be imported.
@@ -755,6 +828,13 @@ public class Main {
 }
 ```
 
+Output:
+
+```text
+Woof
+Tommy is sleeping
+```
+
 Use an abstract class when related classes share state or behavior but must implement some parts themselves.
 
 ---
@@ -813,6 +893,15 @@ public class Main {
 }
 ```
 
+Output:
+
+```text
+Car starts
+Car brakes
+Engine info
+Follow the rules
+```
+
 Key points:
 
 - Interface methods are `public abstract` by default.
@@ -851,6 +940,12 @@ public class Main {
         b.oldMethod();
     }
 }
+```
+
+Output:
+
+```text
+Book
 ```
 
 Common annotations:
@@ -894,6 +989,13 @@ public class Main {
         System.out.println(n.get());
     }
 }
+```
+
+Output:
+
+```text
+Hello
+42
 ```
 
 Generics avoid casts and catch type errors at compile time. Bounded types and wildcards add more control:
@@ -954,6 +1056,13 @@ public class Main {
 }
 ```
 
+Output:
+
+```text
+20
+Item 19
+```
+
 The internal array doubles when full. Adding is usually O(1) amortized.
 
 ---
@@ -978,11 +1087,26 @@ public class Main {
 }
 ```
 
+Output:
+
+```text
+5
+6
+```
+
 Lambdas are commonly used with `forEach`, `Comparator`, `Runnable`, and the `java.util.function` interfaces.
 
 ```java
 List<Integer> numbers = List.of(1, 2, 3);
 numbers.forEach(n -> System.out.println(n * 2));
+```
+
+Output:
+
+```text
+2
+4
+6
 ```
 
 ---
@@ -1028,6 +1152,14 @@ public class Main {
         }
     }
 }
+```
+
+Output:
+
+```text
+Cannot divide by zero
+Done
+Too young
 ```
 
 - `throw` raises an exception.
@@ -1115,6 +1247,14 @@ public class Main {
 }
 ```
 
+Output:
+
+```text
+[Java, OOP]
+[1, 2]
+1
+```
+
 - `List` keeps insertion order and allows duplicates.
 - `Set` does not allow duplicates.
 - `Map` stores key-value pairs.
@@ -1190,6 +1330,20 @@ public class Main {
         }
     }
 }
+```
+
+Output:
+
+```text
+Constructor: MONDAY
+Constructor: TUESDAY
+Constructor: WEDNESDAY
+Hello
+0
+TUESDAY
+MONDAY
+TUESDAY
+WEDNESDAY
 ```
 
 Useful enum methods:
