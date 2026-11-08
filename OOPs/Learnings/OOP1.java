@@ -107,6 +107,7 @@ class A {
     }
 
     @Override
+    @SuppressWarnings("removal")   // finalize() is deprecated for removal; kept only to show it exists
     protected void finalize() throws Throwable {
         System.out.println("Object is destroyed");
     }

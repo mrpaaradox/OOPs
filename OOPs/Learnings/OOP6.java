@@ -90,6 +90,8 @@ class ExceptionMain {
 }
 
 class MyException extends Exception {
+    private static final long serialVersionUID = 1L;
+
     public MyException(String message) {
         super(message);
     }
@@ -191,11 +193,13 @@ class CustomGenArrayList<T> {
         return size == data.length;
     }
 
+    @SuppressWarnings("unchecked")
     public T remove() {
         T removed = (T) (data[--size]);
         return removed;
     }
 
+    @SuppressWarnings("unchecked")
     public T get(int index) {
         return (T) data[index];
     }
@@ -217,7 +221,7 @@ class CustomGenArrayList<T> {
     }
 
     public static void main(String[] args) {
-        CustomGenArrayList list = new CustomGenArrayList();
+        CustomGenArrayList<Integer> list = new CustomGenArrayList<>();
 
         ArrayList<Integer> list2 = new ArrayList<>();
 
@@ -301,11 +305,13 @@ class WildcardExample<T extends Number> {
         return size == data.length;
     }
 
+    @SuppressWarnings("unchecked")
     public T remove() {
         T removed = (T) (data[--size]);
         return removed;
     }
 
+    @SuppressWarnings("unchecked")
     public T get(int index) {
         return (T) data[index];
     }
@@ -327,7 +333,7 @@ class WildcardExample<T extends Number> {
     }
 
     public static void main(String[] args) {
-        WildcardExample list = new WildcardExample();
+        WildcardExample<Integer> list = new WildcardExample<>();
 
         ArrayList<Integer> list2 = new ArrayList<>();
 

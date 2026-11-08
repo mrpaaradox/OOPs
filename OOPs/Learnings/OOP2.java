@@ -130,6 +130,8 @@ class Singleton {
 
     private static Singleton instance;
 
+    // NOTE: this lazy version is not thread-safe. Real code should use
+    // synchronized, a holder class, or an enum singleton.
     public static Singleton getInstance() {
         if (instance == null) {
             instance = new Singleton();

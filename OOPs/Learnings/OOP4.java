@@ -40,7 +40,7 @@ class AccessMain {
     }
 }
 
-class ObjectDemo {
+class ObjectDemo implements Cloneable {
     int num;
     float gpa;
 
@@ -55,6 +55,7 @@ class ObjectDemo {
     }
 
     @Override
+    @SuppressWarnings("removal")   // finalize() is deprecated for removal; shown for contrast only
     protected void finalize() throws Throwable {
         super.finalize();
     }
@@ -66,6 +67,12 @@ class ObjectDemo {
 
     @Override
     public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof ObjectDemo)) {
+            return false;          // guards the cast: equals must never throw
+        }
         return this.num == ((ObjectDemo) obj).num;
     }
 

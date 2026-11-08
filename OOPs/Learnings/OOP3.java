@@ -1,5 +1,4 @@
 package Learnings;
-import java.util.ArrayList;
 
 public class OOP3 {
     public static void main(String[] args) {
@@ -58,7 +57,6 @@ class BoxWeight extends Box {
 
     static void greeting() {
         System.out.println("Hey, I am in BoxWeight class. Greetings!");
-        ArrayList list = new ArrayList();
     }
 
     BoxWeight(BoxWeight other) {
