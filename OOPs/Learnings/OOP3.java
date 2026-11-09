@@ -1,5 +1,3 @@
-package Learnings;
-
 public class OOP3 {
     public static void main(String[] args) {
         InheritanceMain.main(args);

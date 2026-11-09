@@ -2,16 +2,17 @@
 
 A topic-by-topic guide to the **Object Oriented Programming in Java** playlist. Every major concept has a short explanation, a focused code example, and the output that code produces.
 
-The complete runnable programs are in `OOPs/Learnings/` (package `Learnings`). The capstone application,
+The complete runnable programs are in `OOPs/Learnings/`, one file per video. The capstone application,
 `OOPs/WalletApp.java`, puts all seven parts into one running program.
 
 ```bash
-# from the repository root
-javac -d out OOPs/Learnings/*.java
-java -cp out Learnings.OOP1
+cd OOPs/Learnings
+javac OOP1.java
+java OOP1
 
-javac -d out OOPs/WalletApp.java
-java -cp out WalletApp
+cd ..                    # the capstone app
+javac WalletApp.java
+java WalletApp
 ```
 
 ---
