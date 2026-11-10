@@ -6,6 +6,13 @@ The complete runnable programs are in `OOPs/Learnings/`, one file per video. The
 `OOPs/WalletApp.java`, puts all seven parts into one running program.
 
 ```bash
+# with the Makefile, from the repository root
+make wallet        # compile + run the capstone app
+make oop1          # compile + run one study file (oop1 ... oop7)
+make all           # compile everything into build/
+make clean         # delete every .class file and build/
+
+# or with plain javac
 cd OOPs/Learnings
 javac OOP1.java
 java OOP1
