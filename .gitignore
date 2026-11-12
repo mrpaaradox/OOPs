@@ -1,4 +1,4 @@
 # compiled output
 *.class
-/build/
-/out/
+build/
+out/
