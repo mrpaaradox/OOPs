@@ -1,15 +1,21 @@
 /*
- * JavaPay - a small bank, written to show OOP 1..7 doing real work.
+ * JavaPay - a small bank you drive from the terminal, written to show OOP 1..7.
  *
- *     cd OOPs && javac WalletApp.java && java WalletApp
+ *     cd OOPs && javac WalletApp.java && java WalletApp          (interactive)
+ *     cd OOPs && javac WalletApp.java && java WalletApp demo     (scripted day)
  *
- * Three accounts live through one business day: money arrives, a transfer is
- * refused, an account is frozen, interest is paid, fees are charged, and the
- * day ends with a statement. Every class below is introduced by a comment
- * saying what it is for and which part of the course it demonstrates, so the
- * file can be read top to bottom without prior knowledge of the app.
+ * Type help at the prompt: open accounts, deposit, withdraw, transfer, freeze,
+ * pay interest, charge fees, read a statement, watch each entry as it is
+ * recorded. The program reads a command, looks it up and hands it to the
+ * objects below, so every run is a different day at the bank; `demo` replays
+ * the recorded day from the earlier version for anyone who just wants to look.
+ *
+ * Every class is introduced by a comment saying what it is for and which part
+ * of the course it demonstrates, so the file reads top to bottom.
  */
 
+import java.io.*;
+import java.math.BigDecimal;
 import java.util.*;
 
 // ===========================================================================
@@ -42,6 +48,14 @@ final class Money {
     // The only two operations banking needs here, both returning fresh objects.
     Money plus(Money m) { return new Money(paise + m.paise); }
     Money times(double factor) { return new Money(Math.round(paise * factor)); }
+
+    // Reading "1,250.75" from the terminal. BigDecimal shifts the point two
+    // places and refuses fractions of a paisa; Double.parseDouble would drag
+    // the same rounding error back in that this class exists to avoid.
+    static Money parse(String text) {
+        try { return new Money(new BigDecimal(text.replace(",", "")).movePointRight(2).longValueExact()); }
+        catch (ArithmeticException | NumberFormatException e) { throw new IllegalArgumentException("not an amount: " + text); }
+    }
 
     // OOP 4: value equality - two notes of 500 are the same 500.
     public boolean equals(Object o) { return o instanceof Money m && m.paise == paise; }
@@ -89,7 +103,10 @@ class History implements Cloneable {
 // ===========================================================================
 @SuppressWarnings("serial") class WalletException extends Exception { WalletException(String m) { super(m); } }
 @SuppressWarnings("serial") class Insufficient extends WalletException {
-    Insufficient(String id, Money want, Money have) { super(id + " needs " + want + ", has " + have); }
+    // "available" is what could actually leave, so it never prints a negative.
+    Insufficient(String id, Money want, Money have) {
+        super(id + " needs " + want + ", available " + Money.of(Math.max(0, have.paise)));
+    }
 }
 
 // ===========================================================================
@@ -126,7 +143,7 @@ abstract class Account {
 
     String id() { return id; }
     Money balance() { return Money.of(paise); }
-    Money available() { return Money.of(paise - floor()); }        // what may still leave
+    Money available() { return Money.of(Math.max(0, paise - floor())); }   // what may still leave
     List<Tx> recent(int n) { return trail.subList(Math.max(0, trail.size() - n), trail.size()); }
     void freeze() { frozen = true; } void unfreeze() { frozen = false; }
 
@@ -178,6 +195,7 @@ abstract class Account {
     // Guards every operation shares.
     final void alive() throws WalletException { if (frozen) throw new WalletException(id + " is frozen"); }
     private void pay(long amount, String note, Kind kind) throws WalletException {
+        if (amount <= 0) throw new IllegalArgumentException("amount must be positive");
         if (amount > paise - floor()) throw new Insufficient(id, Money.of(amount), Money.of(paise - floor()));
         paise -= amount; record(kind, amount, note);
     }
@@ -247,6 +265,10 @@ final class Bank {
         byId.put(a.id(), a); return a;
     }
 
+    // The shell types an id; the map answers. Null means "no such account", which
+    // the command layer turns into a helpful message instead of a stack trace.
+    Account find(String id) { return byId.get(id.toUpperCase()); }
+
     // Every transaction is recorded in both directions: the Vector keeps the
     // arrival order, the map counts kinds (autoboxing in and out), and whoever
     // subscribed hears about it.
@@ -274,65 +296,222 @@ final class Bank {
 }
 
 // ===========================================================================
-// OOP 1 - main: the day itself. Nothing here is a syntax demo; it is one
-// customer journey that happens to walk through every class above.
+// OOP 1 + OOP 6 - WalletApp: the terminal. It reads one command per line, finds
+// the objects it names and calls them; the objects do the work and know nothing
+// about the keyboard. Every command may fail with a checked exception, and one
+// catch block in the loop turns the failure into a message instead of a crash.
 // ===========================================================================
 public class WalletApp {
+    private static final Bank BANK = Bank.get();
+    private static final BufferedReader IN = new BufferedReader(new InputStreamReader(System.in));
+    private static final Set<String> PRODUCTS = Set.of("savings", "premium", "current");
+
     public static void main(String[] args) throws Exception {
-        Bank bank = Bank.get();
         System.out.println("JavaPay  |  " + Bank.branches());
         System.out.println("=".repeat(64));
+        if (args.length > 0 && args[0].equalsIgnoreCase("demo")) { demo(); return; }
+        System.out.println("Type help for commands, demo for a scripted day, quit to leave.");
+        loop();
+    }
 
-        // One account of each product. They answer the three questions
-        // differently, so from here on they are simply three Accounts.
-        Account aarav = bank.open("savings", 0), diya = bank.open("premium", 0), zoya = bank.open("current", 0);
+    // Reads until quit or end of input. Nothing here knows what a command does.
+    private static void loop() throws Exception {
+        while (true) {
+            System.out.print("\n> ");
+            System.out.flush();
+            String line = IN.readLine();                       // null at end of input
+            if (line == null) { System.out.println(" bye"); return; }
+            String[] c = line.trim().split("\\s+");
+            if (c[0].isEmpty()) continue;
+            try {
+                if (!dispatch(c)) { System.out.println(" bye"); return; }
+            } catch (WalletException | IllegalArgumentException e) {
+                System.out.println("  ! " + e.getMessage());   // one place handles every refusal
+            }
+        }
+    }
 
-        // Morning: salaries in, then a rent transfer and a supplier payment.
-        aarav.deposit(Money.rs(42_000), "salary");
-        diya.deposit(Money.rs(6_000), "bonus");
-        zoya.deposit(Money.rs(8_000), "invoice");
-        aarav.transferTo(diya, Money.rs(18_000), "rent");
-        zoya.transferTo(diya, Money.rs(12_000), "supplier");     // dips into the overdraft
+    // The command table. Returns false when the session should end.
+    private static boolean dispatch(String[] c) throws WalletException {
+        switch (c[0].toLowerCase()) {
+            case "help" -> help();
+            case "open" -> open(c);
+            case "accounts" -> accounts();
+            case "deposit" -> deposit(c);
+            case "withdraw" -> withdraw(c);
+            case "transfer" -> transfer(c);
+            case "statement" -> statement(c);
+            case "history" -> history(c);
+            case "watch" -> watch();
+            case "freeze" -> freeze(c, true);
+            case "unfreeze" -> freeze(c, false);
+            case "accrue", "interest" -> accrue(c);
+            case "fees" -> fees();
+            case "teller" -> teller(c);
+            case "bank" -> bankSummary();
+            case "demo" -> demo();
+            case "quit", "exit" -> { return false; }
+            default -> throw new IllegalArgumentException("unknown command '" + c[0] + "' - try help");
+        }
+        return true;
+    }
 
-        List<Account> accounts = bank.all();
-        System.out.println("\naccounts after the morning");
+    private static void help() {
+        System.out.print("""
+                  open savings|premium|current [opening]   start an account
+                  accounts                                 balances and products
+                  deposit  <account> <amount> [note]       add money
+                  withdraw <account> <amount>              take money out
+                  transfer <from> <to> <amount> [note]     move money, fee applies
+                  statement <account> [n]                  last n entries, default 5
+                  history <account>                        balance after each entry
+                  watch                                    announce every new entry
+                  freeze | unfreeze <account>              stop or resume activity
+                  accrue [days]                            pay interest, default 365
+                  fees                                     charge the monthly fees
+                  teller <account> <rupees> <months>       fixed-deposit quote
+                  bank                                     ledger and totals
+                  demo                                     replay a scripted day
+                  help | quit
+                """);
+    }
+
+    // ---- one method per command, each a thin translation of words to calls ----
+
+    private static void open(String[] c) throws WalletException {
+        need(c, 2, "open savings|premium|current [opening]");
+        String kind = c[1].toLowerCase();
+        if (!PRODUCTS.contains(kind)) throw new IllegalArgumentException("no such product '" + c[1] + "'");
+        Account a = BANK.open(kind, c.length > 2 ? Money.parse(c[2]).paise : 0);
+        System.out.println("  opened " + a + "  available " + a.available());
+    }
+
+    private static void accounts() {
+        if (BANK.all().isEmpty()) { System.out.println("  no accounts yet - try: open savings 5000"); return; }
         System.out.printf("  %-7s %-8s %13s   %s%n", "id", "product", "balance", "available");
-        for (Account a : accounts)
+        for (Account a : BANK.all())
             System.out.printf("  %-7s %-8s %13s   %s%n", a.id(), a.getClass().getSimpleName(), a.balance(), a.available());
+    }
 
-        // Two refusals: more money than the floor allows, and a frozen account.
-        System.out.println("\nrefused by the bank");
-        try { aarav.withdraw(Money.rs(30_000)); }
-        catch (Insufficient e) { System.out.println("  " + e.getMessage()); }
-        zoya.freeze();
-        try { zoya.deposit(Money.rs(500)); }
-        catch (WalletException e) { System.out.println("  " + e.getMessage()); }
-        finally { zoya.unfreeze(); }                             // OOP 6: always runs
+    private static void deposit(String[] c) throws WalletException {
+        need(c, 3, "deposit <account> <amount> [note]");
+        Account a = account(c[1]);
+        a.deposit(Money.parse(c[2]), c.length > 3 ? words(c, 3) : "deposit");
+        System.out.println("  " + a + "  available " + a.available());
+    }
 
-        // End of day: pay interest, then charge the monthly fees.
-        accounts.forEach(a -> a.accrue(365));
-        for (Account a : accounts) try { a.settle(); } catch (WalletException e) { System.out.println("  " + a.id() + " fee skipped"); }
-        System.out.println("\nafter interest and fees");
-        System.out.printf("  %-7s %13s%n", "id", "balance");
-        for (Account a : accounts) System.out.printf("  %-7s %13s%n", a.id(), a.balance());
+    private static void withdraw(String[] c) throws WalletException {
+        need(c, 3, "withdraw <account> <amount>");
+        Account a = account(c[1]);
+        a.withdraw(Money.parse(c[2]));
+        System.out.println("  " + a + "  available " + a.available());
+    }
 
-        // The statement is the last three entries, newest last.
-        System.out.println("\nstatement  " + aarav.id());
-        aarav.recent(3).forEach(t -> System.out.println("  " + t));
+    private static void transfer(String[] c) throws WalletException {
+        need(c, 4, "transfer <from> <to> <amount> [note]");
+        Account from = account(c[1]), to = account(c[2]);
+        if (from == to) throw new IllegalArgumentException("cannot transfer to the same account");
+        from.transferTo(to, Money.parse(c[3]), c.length > 4 ? words(c, 4) : "transfer");
+        System.out.println("  " + from + "  |  " + to);
+    }
 
-        // OOP 6: the copy is edited, and the original is untouched.
-        History history = aarav.history(), replay = history.clone();
-        replay.points()[replay.points().length - 1] = 1;
-        System.out.println("\nhistory       " + history);
-        System.out.println("copy, edited  " + replay);
+    private static void statement(String[] c) {
+        need(c, 2, "statement <account> [n]");
+        Account a = account(c[1]);
+        int n = c.length > 2 ? number(c[2]) : 5;
+        System.out.println("  last " + n + " entries of " + a.id());
+        a.recent(n).forEach(t -> System.out.println("    " + t));
+    }
 
-        // A listener sees every transaction, including the last deposit, and the
-        // teller quotes a fixed deposit on top of the day's totals.
-        int[] seen = {0};
-        bank.subscribe(t -> seen[0]++);                          // OOP 6: lambda for a nested interface
-        aarav.deposit(Money.rs(1_000), "top-up");
-        System.out.println("\nteller        " + bank.teller().fd(diya, 10_000, 12));
-        System.out.printf("bank          listener saw %d, ledger %d entries, counts %s, total %s%n",
-                seen[0], bank.ledger().size(), new TreeMap<>(bank.counts()), Money.of(Bank.totalPaise(accounts)));
+    private static void history(String[] c) {
+        need(c, 2, "history <account>");
+        Account a = account(c[1]);
+        History h = a.history();
+        if (h.points().length == 0) { System.out.println("  " + a.id() + " has no entries yet"); return; }
+        System.out.println("  " + a.id() + " balance after each entry");
+        System.out.println("    " + h);
+        // OOP 6: editing the clone leaves the line above exactly as it was.
+        History copy = h.clone(); copy.points()[copy.points().length - 1] = 1;
+        System.out.println("    copy, edited " + copy);
+    }
+
+    // OOP 5 + OOP 6: subscribe a lambda to the bank's nested Listener interface,
+    // and every transaction from now on is announced as it is recorded.
+    private static void watch() {
+        BANK.subscribe(t -> System.out.println("    heard " + t));
+        System.out.println("  watching new transactions - they will appear as they happen");
+    }
+
+    private static void freeze(String[] c, boolean frozen) {
+        need(c, 2, (frozen ? "freeze" : "unfreeze") + " <account>");
+        Account a = account(c[1]);
+        if (frozen) a.freeze(); else a.unfreeze();
+        System.out.println("  " + a.id() + (frozen ? " is frozen" : " is active again"));
+    }
+
+    private static void accrue(String[] c) {
+        int days = c.length > 1 ? number(c[1]) : 365;
+        for (Account a : BANK.all()) a.accrue(days);
+        System.out.println("  interest for " + days + " days");
+        accounts();
+    }
+
+    private static void fees() {
+        for (Account a : BANK.all()) {
+            try { a.settle(); }
+            catch (WalletException e) { System.out.println("  ! " + e.getMessage()); }
+        }
+        System.out.println("  monthly fees charged");
+        accounts();
+    }
+
+    private static void teller(String[] c) {
+        need(c, 4, "teller <account> <rupees> <months>");
+        System.out.println("  " + BANK.teller().fd(account(c[1]), number(c[2]), number(c[3])));
+    }
+
+    private static void bankSummary() {
+        System.out.println("  accounts  " + BANK.all().size());
+        System.out.println("  ledger    " + BANK.ledger().size() + " entries, newest last");
+        System.out.println("  by kind   " + new TreeMap<>(BANK.counts()));
+        System.out.println("  held      " + Money.of(Bank.totalPaise(BANK.all())));
+    }
+
+    // A recorded session, typed through the same commands a user would type. It
+    // needs a fresh session because it refers to the ids it is about to create.
+    private static void demo() throws WalletException {
+        if (!BANK.all().isEmpty()) throw new IllegalArgumentException("demo needs a fresh session - restart without input");
+        String[] day = {
+            "open savings", "open premium", "open current",
+            "deposit SAV-1 42000 salary", "deposit PREM-2 6000 bonus", "deposit CUR-3 8000 invoice",
+            "transfer SAV-1 PREM-2 18000 rent", "transfer CUR-3 PREM-2 12000 supplier",
+            "accounts", "watch",
+            "withdraw SAV-1 30000",
+            "freeze CUR-3", "deposit CUR-3 500", "unfreeze CUR-3",
+            "accrue 365", "fees",
+            "statement SAV-1 3", "history SAV-1",
+            "teller PREM-2 10000 12", "bank"
+        };
+        for (String line : day) {
+            System.out.println("\n> " + line);
+            try { dispatch(line.split(" ")); }
+            catch (WalletException | IllegalArgumentException e) { System.out.println("  ! " + e.getMessage()); }
+        }
+    }
+
+    // ---- argument helpers: every one fails with a sentence, never a trace ----
+
+    private static Account account(String id) {
+        Account a = BANK.find(id);
+        if (a == null) throw new IllegalArgumentException("no account " + id + " - try accounts");
+        return a;
+    }
+    private static int number(String text) {
+        try { return Integer.parseInt(text); }
+        catch (NumberFormatException e) { throw new IllegalArgumentException("not a number: " + text); }
+    }
+    private static String words(String[] c, int from) { return String.join(" ", Arrays.copyOfRange(c, from, c.length)); }
+    private static void need(String[] c, int n, String usage) {
+        if (c.length < n) throw new IllegalArgumentException("usage: " + usage);
     }
 }

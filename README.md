@@ -7,7 +7,8 @@ The complete runnable programs are in `OOPs/Learnings/`, one file per video. The
 
 ```bash
 # with the Makefile, which lives in OOPs/
-make -C OOPs wallet   # compile + run the capstone app
+make -C OOPs wallet   # compile + run the bank, interactive
+make -C OOPs demo     # compile + replay a recorded day, no typing
 make -C OOPs oop1     # compile + run one study file (oop1 ... oop7)
 make -C OOPs all      # compile everything into OOPs/build/
 make -C OOPs clean    # delete every .class file and OOPs/build/
@@ -25,6 +26,29 @@ cd ..                    # the capstone app
 javac WalletApp.java
 java WalletApp
 ```
+
+### Driving the bank
+
+`WalletApp` is a terminal app: it prints a `>` prompt, reads one command per
+line and answers. Refusals come back as `!` lines, never as stack traces.
+
+```
+> open savings 5000
+  opened SAV-1 Savings ₹5,000.00  available ₹4,900.00
+> deposit SAV-1 250.50 salary
+  SAV-1 Savings ₹5,250.50  available ₹5,150.50
+> withdraw SAV-1 99999
+  ! SAV-1 needs ₹99,999.00, available ₹5,150.50
+> statement SAV-1
+  last 5 entries of SAV-1
+    #1 DEPOSIT ₹5,000.00 opening
+    #2 DEPOSIT ₹250.50 salary
+```
+
+Type `help` for the full list: `open`, `accounts`, `deposit`, `withdraw`,
+`transfer`, `statement`, `history`, `watch`, `freeze`/`unfreeze`, `accrue`,
+`fees`, `teller`, `bank`, `demo`, `quit`. `make demo` replays a recorded day
+if you want to see everything without typing.
 
 ---
 
