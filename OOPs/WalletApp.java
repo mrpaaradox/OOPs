@@ -1,7 +1,56 @@
-/* JavaPay - OOP1..OOP7 in one banking app.  javac WalletApp.java && java WalletApp
- * Money=OOP1/4 value object, Account=OOP5 abstract + final template methods,
- * Savings=OOP3 hierarchy, Bank=OOP2 singleton + inner class, History=OOP6 clone.
- * Every concept is tagged // OOPn at the line where it is used. */
+/*
+ * JavaPay - one small bank, written to show OOP 1..7 working together.
+ *
+ *     cd OOPs && javac WalletApp.java && java WalletApp
+ *
+ * WHAT IT DOES
+ *   Opens three accounts, moves money between them, charges fees, pays interest
+ *   and prints a statement: one business day of a bank, start to finish. Every
+ *   idea from the seven course files appears once here, doing a real job.
+ *
+ * HOW MONEY IS HANDLED
+ *   Money holds paise (1 rupee = 100 paise) in a final long, never a double,
+ *   because 0.10 is exact in a long and not in binary floating point - so no
+ *   balance can ever drift by a paisa. A Money never changes: every operation
+ *   returns a new object. An Account stores a plain paise field instead, so the
+ *   common path allocates nothing. "Rs 1,234.56" exists only in Money.toString().
+ *
+ * WHY IT IS SHAPED THIS WAY
+ *   An Account never knows which product it is. Four final template methods
+ *   (deposit, withdraw, transferTo, settle) fix the order of every money move:
+ *   frozen check, floor check, debit, fee, credit, ledger entry. A product only
+ *   answers floor() (lowest balance allowed; negative means overdraft),
+ *   monthlyFee() and transferFee(). So adding a product never edits an existing
+ *   algorithm, and no caller has to ask "which subclass are you?". Bank is a
+ *   singleton because one ledger is shared by the whole app.
+ *
+ * WHO IS WHO                     what it is for                                   course
+ * Kind                           six transaction types, which ones add money      OOP7
+ * Money                          immutable amount, equals/hashCode/toString       OOP1/4
+ * Tx                             one ledger line, Comparable by id                OOP6/2
+ * History                        balance over time, clone copies the array        OOP6
+ * WalletException, Insufficient  failures a customer can cause                    OOP6
+ * InterestBearing, Fee           pays interest / charges by rule                  OOP5/6
+ * Account                        abstract: balance, trail, 4 final operations     OOP5
+ * Savings                        floor Rs 100, 3.5% a year, free transfers        OOP3
+ * Premium                        Savings + floor Rs 5,000, Rs 99 monthly          OOP3
+ * Current                        floor -overdraft, Rs 499 fee, 0.5% transfer      OOP4
+ * Bank                           the only instance: branches, ledger, counts      OOP2/7
+ * WalletApp                      main(): the day that exercises it all            OOP1
+ *
+ * EVERYTHING ELSE THE COURSE TAUGHT        (each is also tagged // OOPn inline)
+ *   Three-level inheritance Savings > Premium with super calls and constructor
+ *   chaining; overloading of deposit(); runtime polymorphism through floor()
+ *   and transferFee(); protected state; getClass(); instanceof pattern;
+ *   abstract hooks; interfaces as capabilities; Comparable; Cloneable
+ *   deep copy; checked exceptions; try/finally; lambdas as Fee and Listener;
+ *   wildcard generics in totalPaise(); enum behaviour; ArrayList, Vector,
+ *   LinkedHashMap, HashMap and TreeMap; sorting a copy by Comparable.
+ *
+ * READING ORDER
+ *   Kind, Money, Tx, History, exceptions, interfaces, Account, the three
+ *   products, Bank, then main() last - it is the story the rest exists to serve.
+ */
 import java.util.*;
 
 enum Kind {                                                     // OOP7: enum with behaviour
