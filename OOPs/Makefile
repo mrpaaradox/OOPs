@@ -2,7 +2,6 @@
 #
 #   make            show this help
 #   make wallet     compile + run the capstone app, interactive
-#   make demo       run the capstone app's scripted day
 #   make oop1       compile + run OOP1.java         (oop1 ... oop7)
 #   make all        compile every program into build/
 #   make fresh      clean, then compile everything
@@ -28,13 +27,12 @@ BUILD     := $(HERE)/build
 OOP_TARGETS := oop1 oop2 oop3 oop4 oop5 oop6 oop7
 
 .DEFAULT_GOAL := help
-.PHONY: help wallet demo all clean fresh $(OOP_TARGETS)
+.PHONY: help wallet all clean fresh $(OOP_TARGETS)
 
 help:
 	@echo "Java OOP playground  ($(HERE))"
 	@echo
 	@echo "  make wallet   compile and run the capstone app (interactive)"
-	@echo "  make demo     run the capstone's scripted day, no typing"
 	@echo "  make oop1     compile and run OOP1.java   (oop1 ... oop7)"
 	@echo "  make all      compile every program into build/"
 	@echo "  make fresh    clean, then compile everything"
@@ -49,11 +47,6 @@ wallet:
 	@mkdir -p $(BUILD)
 	$(JAVAC) $(FLAGS) -d $(BUILD) $(APP)
 	$(JAVA) -cp $(BUILD) WalletApp
-
-demo:
-	@mkdir -p $(BUILD)
-	$(JAVAC) $(FLAGS) -d $(BUILD) $(APP)
-	$(JAVA) -cp $(BUILD) WalletApp demo
 
 all:
 	@mkdir -p $(BUILD)

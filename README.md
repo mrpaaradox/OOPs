@@ -8,7 +8,6 @@ The complete runnable programs are in `OOPs/Learnings/`, one file per video. The
 ```bash
 # with the Makefile, which lives in OOPs/
 make -C OOPs wallet   # compile + run the bank, interactive
-make -C OOPs demo     # compile + replay a recorded day, no typing
 make -C OOPs oop1     # compile + run one study file (oop1 ... oop7)
 make -C OOPs all      # compile everything into OOPs/build/
 make -C OOPs clean    # delete every .class file and OOPs/build/
@@ -47,8 +46,7 @@ line and answers. Refusals come back as `!` lines, never as stack traces.
 
 Type `help` for the full list: `open`, `accounts`, `deposit`, `withdraw`,
 `transfer`, `statement`, `history`, `watch`, `freeze`/`unfreeze`, `accrue`,
-`fees`, `teller`, `bank`, `demo`, `quit`. `make demo` replays a recorded day
-if you want to see everything without typing.
+`fees`, `teller`, `bank`, `quit`.
 
 ---
 

@@ -1,8 +1,7 @@
 /*
  * JavaPay - a small bank you drive from the terminal, demonstrating OOP 1..7.
  *
- *     javac WalletApp.java && java WalletApp          (interactive)
- *     javac WalletApp.java && java WalletApp demo     (scripted day)
+ *     javac WalletApp.java && java WalletApp
  */
 
 import java.io.*;
@@ -237,20 +236,10 @@ public class WalletApp {
     private static final Map<String, Integer> ARITY = Map.of(
             "open", 2, "deposit", 3, "withdraw", 3, "transfer", 4, "statement", 2,
             "history", 2, "freeze", 2, "unfreeze", 2, "teller", 4);
-    // The recorded day, replayed through the very commands a user would type.
-    private static final String DEMO = """
-            open savings;open premium;open current;deposit SAV-1 42000 salary;\
-            deposit PREM-2 6000 bonus;deposit CUR-3 8000 invoice;\
-            transfer SAV-1 PREM-2 18000 rent;transfer CUR-3 PREM-2 12000 supplier;\
-            accounts;watch;withdraw SAV-1 30000;\
-            freeze CUR-3;deposit CUR-3 500;unfreeze CUR-3;\
-            accrue 365;fees;statement SAV-1 3;history SAV-1;\
-            teller PREM-2 10000 12;bank""";
 
     public static void main(String[] args) throws Exception {
         System.out.println("JavaPay  |  " + Bank.branches() + "\n" + "=".repeat(64));
-        if (args.length > 0 && args[0].equalsIgnoreCase("demo")) { demo(); return; }
-        System.out.println("Type help for commands, demo for a scripted day, quit to leave.");
+        System.out.println("Type help for commands, quit to leave.");
         loop();
     }
 
@@ -286,7 +275,6 @@ public class WalletApp {
             case "fees" -> fees();
             case "teller" -> teller(c);
             case "bank" -> bankSummary();
-            case "demo" -> demo();
             case "quit", "exit" -> { return false; }
             default -> throw new IllegalArgumentException("unknown command '" + cmd + "' - try help");
         }
@@ -300,13 +288,12 @@ public class WalletApp {
                   deposit <acc> <amount> [note]             add money
                   withdraw <acc> <amount>                   take money out
                   transfer <from> <to> <amount> [note]      fee applies
-                  statement <acc> [n]                       last n entries
-                  history <acc>                             running balances
-                  watch                                     announce new entries
-                  freeze | unfreeze <acc>                    stop / resume
+                  statement <acc> [n] | history <acc>       entries / running balance
+                  watch | bank                              observe / totals
+                  freeze | unfreeze <acc>                   stop / resume
                   accrue [days] | fees                      interest / monthly fees
                   teller <acc> <rupees> <months>            FD quote
-                  bank | demo | help | quit                 summaries, session
+                  help | quit
                 """);
     }
 
@@ -377,14 +364,6 @@ public class WalletApp {
         List<Account> all = BANK.all();
         System.out.printf("  accounts  %d%n  ledger    %d entries, newest last%n  by kind   %s%n  held      %s%n",
                 all.size(), BANK.ledger().size(), new TreeMap<>(BANK.counts()), Money.of(Bank.totalPaise(all)));
-    }
-    private static void demo() throws WalletException {
-        if (!BANK.all().isEmpty()) throw new IllegalArgumentException("demo needs a fresh session - restart without input");
-        for (String line : DEMO.split(";")) {
-            System.out.println("\n> " + line);
-            try { dispatch(line.split(" ")); }
-            catch (WalletException | IllegalArgumentException e) { System.out.println("  ! " + e.getMessage()); }
-        }
     }
 
     // ---- argument helpers: every one fails with a sentence, never a trace ----
